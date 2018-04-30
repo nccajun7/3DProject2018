@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset=utf-8>
+    <title>My first three.js app</title>
+    <label type="text">IMAGE:</label>
+    <input type="text" id="imageInput" />
+    <Button id="submit" type="button">SUBMIT SETTINGS</Button>
+    <style>
+        body { margin: 0;
+               overflow: hidden;
+        }
+        canvas { width: 100%; ]
+                 height: 100%
+                }
+    </style>
+</head>
+
+
+<body>
+
+
+<canvas id="myCanvas"></canvas>
+
+<script src = "js/three.js"> </script>
+<script>
+
+
+
+
+    document.getElementById('submit').onclick = function(){
+
+
+        var imageURL = document.getElementById('imageInput');
+        var myURL = imageURL.value;
+
+
+
+        var renderer = new THREE.WebGLRenderer({canvas: document.getElementById('myCanvas'), antialias: true});
+        renderer.setClearColor(0xf0f0f0);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+
+
+        var camera = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 0.1, 3000 );
+        camera.position.set(0, 0, 0);
+
+        var scene = new THREE.Scene();
+        //scene.background = new THREE.Color( 0xf0f0f0 );
+        scene.add(camera);
+
+        var canvas = document.getElementById('myCanvas');
+
+        document.body.appendChild( renderer.domElement );
+
+        const textureLoader = new THREE.TextureLoader();
+        textureLoader.crossOrigin = "Anonymous";
+        const myTexture = textureLoader.load(myURL);
+
+        var objects = [];
+
+        var geometry = new THREE.BoxGeometry(50, 50, 40);
+        for (var i = 0; i< 5; i++){
+
+            
+            var cube = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({color: Math.random() * 0xffffff}));
+            var pls = Math.random() * window.innerWidth;
+            cube.position.set(Math.random() * window.innerWidth, Math.random() * window.innerHeight, -100);
+
+            scene.add(cube);
+
+            objects.push(cube);
+
+        }
+
+        //var controls = new THREE.DragControls(objects, camera, renderer);
+
+        renderer.render(scene, camera);
+
+
+    }
+
+
+
+
+
+
+
+</script>
+</body>
+
+
+
+
+
+
+
+</html>
