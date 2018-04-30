@@ -346,7 +346,7 @@
 
 
 
-        var camera = new THREE.OrthographicCamera( innerWidth / - 2, innerWidth / 2, innerHeight / 2, innerHeight / - 2, 1, 1000 );
+       var camera = new THREE.OrthographicCamera( innerWidth / - 2, innerWidth / 2, innerHeight / 2, innerHeight / - 2, 0.1, 3000 );
         camera.position.set(0, 0, 0);
 
         var scene = new THREE.Scene();
@@ -363,10 +363,16 @@
 
         var objects = [];
 
-        var start = new THREE.BoxGeometry(innerWidth / 4, innerHeight / 4, 2);
+        var start = new THREE.BoxGeometry(innerWidth / 2, innerHeight / 2, 2);
         var grid = new THREE.Mesh(start, new THREE.MeshBasicMaterial({color: 0x000000}));
-        grid.position.set((innerWidth / 2) * -1, innerHeight / 2, -1005);
+        grid.position.set(((innerWidth / 2) * -1) + 400, innerHeight / 2 - 200, -1010);
         scene.add(grid);
+
+
+        var innerGridGeo = new THREE.BoxGeometry(innerWidth / 2.05, innerHeight / 2.1, 2);
+        var innerGrid = new THREE.Mesh(innerGridGeo, new THREE.MeshBasicMaterial({color:0xf0f0f0}));
+        innerGrid.position.set(((innerWidth / 2) * -1) + 400, innerHeight / 2 - 200, -1005);
+        scene.add(innerGrid);
 
         var geometry = new THREE.BoxGeometry(50, 50, 2);
         for (var i = 0; i< 100; i++){
