@@ -23,6 +23,7 @@
 
 <canvas id="myCanvas"></canvas>
 
+<script src = "js/ObjectControls.js"></script>
 <script src = "js/three.js"> </script>
 <script>
 
@@ -208,7 +209,7 @@
 
                 scope.dispatchEvent( { type: 'drag', object: _selected } );
 
-                return;
+
 
             }
 
@@ -311,10 +312,9 @@
 
 
 
-
-
-
-
+/* authors: Nicholas Charles, Zack Brandon,
+            David Reedy, Landry LastName
+ */
 
 
 
@@ -339,6 +339,7 @@
 
 
 
+
         var renderer = new THREE.WebGLRenderer({canvas: document.getElementById('myCanvas'), antialias: true});
         //renderer.setClearColor(0xf0f0f0);
         renderer.setPixelRatio(window.devicePixelRatio);
@@ -349,9 +350,11 @@
        var camera = new THREE.OrthographicCamera( innerWidth / - 2, innerWidth / 2, innerHeight / 2, innerHeight / - 2, 0.1, 3000 );
         camera.position.set(0, 0, 0);
 
+
         var scene = new THREE.Scene();
         scene.background = new THREE.Color( 0xf0f0f0 );
         scene.add(camera);
+
 
         var canvas = document.getElementById('myCanvas');
 
@@ -379,8 +382,10 @@
 
 
             var cube = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({color: Math.random() * 0xffffff}));
-            var pls = Math.random() * window.innerWidth;
-            cube.position.set(Math.random() * (window.innerWidth / 3) + 200,-1 * Math.random() * (window.innerHeight  / 2) + 100, -1000);
+
+            cube.position.x = Math.random() * (window.innerWidth / 3) + 200;
+            cube.position.y = -1 * Math.random() * (window.innerHeight  / 2) + 100;
+            cube.position.z = -1000;
 
             scene.add(cube);
 
@@ -388,9 +393,22 @@
 
         }
 
-       var controls = new THREE.DragControls(objects, camera, renderer.domElement);
+        function render(){
+            renderer.render(scene, camera);
+        }
 
-        renderer.render(scene, camera);
+        
+
+        const dragControls = new THREE.DragControls(objects, camera, renderer.domElement);
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+
 
 
     }
