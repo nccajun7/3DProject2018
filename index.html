@@ -26,6 +26,308 @@
 <script src = "js/three.js"> </script>
 <script>
 
+    /*
+ * @author zz85 / https://github.com/zz85
+ * @author mrdoob / http://mrdoob.com
+ * Running this will allow you to drag three.js objects around the screen.
+ */
+
+    THREE.DragControls = function ( _objects, _camera, _domElement ) {
+
+        if ( _objects instanceof THREE.Camera ) {
+
+            console.warn( 'THREE.DragControls: Constructor now expects ( objects, camera, domElement )' );
+            var temp = _objects; _objects = _camera; _camera = temp;
+
+        }
+
+        var _plane = new THREE.Plane();
+        var _raycaster = new THREE.Raycaster();
+
+        var _mouse = new THREE.Vector2();
+        var _offset = new THREE.Vector3();
+        var _intersection = new THREE.Vector3();
+
+        var _selected = null, _hovered = null;
+
+        //
+
+        var scope = this;
+
+        function activate() {
+
+            _domElement.addEventListener( 'mousemove', onDocumentMouseMove, false );
+            _domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
+            _domElement.addEventListener( 'mouseup', onDocumentMouseCancel, false );
+            _domElement.addEventListener( 'mouseleave', onDocumentMouseCancel, false );
+            _domElement.addEventListener( 'touchmove', onDocumentTouchMove, false );
+            _domElement.addEventListener( 'touchstart', onDocumentTouchStart, false );
+            _domElement.addEventListener( 'touchend', onDocumentTouchEnd, false );
+
+        }
+
+        function deactivate() {
+
+            _domElement.removeEventListener( 'mousemove', onDocumentMouseMove, false );
+            _domElement.removeEventListener( 'mousedown', onDocumentMouseDown, false );
+            _domElement.removeEventListener( 'mouseup', onDocumentMouseCancel, false );
+            _domElement.removeEventListener( 'mouseleave', onDocumentMouseCancel, false );
+            _domElement.removeEventListener( 'touchmove', onDocumentTouchMove, false );
+            _domElement.removeEventListener( 'touchstart', onDocumentTouchStart, false );
+            _domElement.removeEventListener( 'touchend', onDocumentTouchEnd, false );
+
+        }
+
+        function dispose() {
+
+            deactivate();
+
+        }
+
+        function onDocumentMouseMove( event ) {
+
+            event.preventDefault();
+
+            var rect = _domElement.getBoundingClientRect();
+
+            _mouse.x = ( ( event.clientX - rect.left ) / rect.width ) * 2 - 1;
+            _mouse.y = - ( ( event.clientY - rect.top ) / rect.height ) * 2 + 1;
+
+            _raycaster.setFromCamera( _mouse, _camera );
+
+            if ( _selected && scope.enabled ) {
+
+                if ( _raycaster.ray.intersectPlane( _plane, _intersection ) ) {
+
+                    _selected.position.copy( _intersection.sub( _offset ) );
+
+                }
+
+                scope.dispatchEvent( { type: 'drag', object: _selected } );
+
+                return;
+
+            }
+
+            _raycaster.setFromCamera( _mouse, _camera );
+
+            var intersects = _raycaster.intersectObjects( _objects );
+
+            if ( intersects.length > 0 ) {
+
+                var object = intersects[ 0 ].object;
+
+                _plane.setFromNormalAndCoplanarPoint( _camera.getWorldDirection( _plane.normal ), object.position );
+
+                if ( _hovered !== object ) {
+
+                    scope.dispatchEvent( { type: 'hoveron', object: object } );
+
+                    _domElement.style.cursor = 'pointer';
+                    _hovered = object;
+
+                }
+
+            } else {
+
+                if ( _hovered !== null ) {
+
+                    scope.dispatchEvent( { type: 'hoveroff', object: _hovered } );
+
+                    _domElement.style.cursor = 'auto';
+                    _hovered = null;
+
+                }
+
+            }
+
+        }
+
+        function onDocumentMouseDown( event ) {
+
+            event.preventDefault();
+
+            _raycaster.setFromCamera( _mouse, _camera );
+
+            var intersects = _raycaster.intersectObjects( _objects );
+
+            if ( intersects.length > 0 ) {
+
+                _selected = intersects[ 0 ].object;
+
+                if ( _raycaster.ray.intersectPlane( _plane, _intersection ) ) {
+
+                    _offset.copy( _intersection ).sub( _selected.position );
+
+                }
+
+                _domElement.style.cursor = 'move';
+
+                scope.dispatchEvent( { type: 'dragstart', object: _selected } );
+
+            }
+
+
+        }
+
+        function onDocumentMouseCancel( event ) {
+
+            event.preventDefault();
+
+            if ( _selected ) {
+
+                scope.dispatchEvent( { type: 'dragend', object: _selected } );
+
+                _selected = null;
+
+            }
+
+            _domElement.style.cursor = 'auto';
+
+        }
+
+        function onDocumentTouchMove( event ) {
+
+            event.preventDefault();
+            event = event.changedTouches[ 0 ];
+
+            var rect = _domElement.getBoundingClientRect();
+
+            _mouse.x = ( ( event.clientX - rect.left ) / rect.width ) * 2 - 1;
+            _mouse.y = - ( ( event.clientY - rect.top ) / rect.height ) * 2 + 1;
+
+            _raycaster.setFromCamera( _mouse, _camera );
+
+            if ( _selected && scope.enabled ) {
+
+                if ( _raycaster.ray.intersectPlane( _plane, _intersection ) ) {
+
+                    _selected.position.copy( _intersection.sub( _offset ) );
+
+                }
+
+                scope.dispatchEvent( { type: 'drag', object: _selected } );
+
+                return;
+
+            }
+
+        }
+
+        function onDocumentTouchStart( event ) {
+
+            event.preventDefault();
+            event = event.changedTouches[ 0 ];
+
+            var rect = _domElement.getBoundingClientRect();
+
+            _mouse.x = ( ( event.clientX - rect.left ) / rect.width ) * 2 - 1;
+            _mouse.y = - ( ( event.clientY - rect.top ) / rect.height ) * 2 + 1;
+
+            _raycaster.setFromCamera( _mouse, _camera );
+
+            var intersects = _raycaster.intersectObjects( _objects );
+
+            if ( intersects.length > 0 ) {
+
+                _selected = intersects[ 0 ].object;
+
+                _plane.setFromNormalAndCoplanarPoint( _camera.getWorldDirection( _plane.normal ), _selected.position );
+
+                if ( _raycaster.ray.intersectPlane( _plane, _intersection ) ) {
+
+                    _offset.copy( _intersection ).sub( _selected.position );
+
+                }
+
+                _domElement.style.cursor = 'move';
+
+                scope.dispatchEvent( { type: 'dragstart', object: _selected } );
+
+            }
+
+
+        }
+
+        function onDocumentTouchEnd( event ) {
+
+            event.preventDefault();
+
+            if ( _selected ) {
+
+                scope.dispatchEvent( { type: 'dragend', object: _selected } );
+
+                _selected = null;
+
+            }
+
+            _domElement.style.cursor = 'auto';
+
+        }
+
+        activate();
+
+        // API
+
+        this.enabled = true;
+
+        this.activate = activate;
+        this.deactivate = deactivate;
+        this.dispose = dispose;
+
+        // Backward compatibility
+
+        this.setObjects = function () {
+
+            console.error( 'THREE.DragControls: setObjects() has been removed.' );
+
+        };
+
+        this.on = function ( type, listener ) {
+
+            console.warn( 'THREE.DragControls: on() has been deprecated. Use addEventListener() instead.' );
+            scope.addEventListener( type, listener );
+
+        };
+
+        this.off = function ( type, listener ) {
+
+            console.warn( 'THREE.DragControls: off() has been deprecated. Use removeEventListener() instead.' );
+            scope.removeEventListener( type, listener );
+
+        };
+
+        this.notify = function ( type ) {
+
+            console.error( 'THREE.DragControls: notify() has been deprecated. Use dispatchEvent() instead.' );
+            scope.dispatchEvent( { type: type } );
+
+        };
+
+    };
+
+    THREE.DragControls.prototype = Object.create( THREE.EventDispatcher.prototype );
+    THREE.DragControls.prototype.constructor = THREE.DragControls;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -38,17 +340,17 @@
 
 
         var renderer = new THREE.WebGLRenderer({canvas: document.getElementById('myCanvas'), antialias: true});
-        renderer.setClearColor(0xf0f0f0);
+        //renderer.setClearColor(0xf0f0f0);
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.setSize(window.innerWidth, window.innerHeight);
 
 
 
-        var camera = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 0.1, 3000 );
+        var camera = new THREE.OrthographicCamera( innerWidth / - 2, innerWidth / 2, innerHeight / 2, innerHeight / - 2, 1, 1000 );
         camera.position.set(0, 0, 0);
 
         var scene = new THREE.Scene();
-        //scene.background = new THREE.Color( 0xf0f0f0 );
+        scene.background = new THREE.Color( 0xf0f0f0 );
         scene.add(camera);
 
         var canvas = document.getElementById('myCanvas');
@@ -61,13 +363,18 @@
 
         var objects = [];
 
-        var geometry = new THREE.BoxGeometry(50, 50, 40);
-        for (var i = 0; i< 5; i++){
+        var start = new THREE.BoxGeometry(innerWidth / 4, innerHeight / 4, 2);
+        var grid = new THREE.Mesh(start, new THREE.MeshBasicMaterial({color: 0x000000}));
+        grid.position.set((innerWidth / 2) * -1, innerHeight / 2, -1005);
+        scene.add(grid);
 
-            
+        var geometry = new THREE.BoxGeometry(50, 50, 2);
+        for (var i = 0; i< 100; i++){
+
+
             var cube = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({color: Math.random() * 0xffffff}));
             var pls = Math.random() * window.innerWidth;
-            cube.position.set(Math.random() * window.innerWidth, Math.random() * window.innerHeight, -100);
+            cube.position.set(Math.random() * (window.innerWidth / 3) + 200,-1 * Math.random() * (window.innerHeight  / 2) + 100, -1000);
 
             scene.add(cube);
 
@@ -75,7 +382,7 @@
 
         }
 
-        //var controls = new THREE.DragControls(objects, camera, renderer);
+       var controls = new THREE.DragControls(objects, camera, renderer.domElement);
 
         renderer.render(scene, camera);
 
