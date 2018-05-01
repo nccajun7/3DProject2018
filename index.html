@@ -6,7 +6,14 @@
     <title>My first three.js app</title>
     <label type="text">IMAGE:</label>
     <input type="text" id="imageInput" />
+    <Button id="picSubmit" type="button">SUBMIT IMAGE</Button>
+    <label type="text">DIFFICULTY:</label>
+    <input type="radio" name="difficulty" id="easy" > EASY </input>
+    <input type="radio" name="difficulty" id="hard" > HARD </input>
+    <input type="radio" name="difficulty" id="extreme" > EXTREME </input>
     <Button id="submit" type="button">SUBMIT SETTINGS</Button>
+
+
     <style>
         body { margin: 0;
                overflow: hidden;
@@ -323,40 +330,101 @@
 
 
 
+    document.getElementById('picSubmit').onclick = function() {
+
+
+        var canvas = document.createElement('canvas');
+        var ctx = canvas.getContext('2d');
+        var imgSplits = [];
+        var img = new Image();
+        img.onload = splitPieces;
+        var numPieces;
+        var imagePieces = [];
+
+
+        var easy = document.getElementById('easy');
+        var hard = document.getElementById('hard');
+        var extreme = document.getElementById('extreme');
+
+        if (easy.checked)
+            numPieces = 16;
+        if (hard.checked)
+            numPieces = 64;
+        if (extreme.checked)
+            numPieces = 100;
 
 
 
 
 
+        function splitPieces() {
+
+
+            var renderer = new THREE.WebGLRenderer({canvas: document.getElementById('myCanvas'), antialias: true});
+            //renderer.setClearColor(0xf0f0f0);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
 
 
 
-    document.getElementById('submit').onclick = function(){
+            var camera = new THREE.OrthographicCamera( innerWidth / - 2, innerWidth / 2, innerHeight / 2, innerHeight / - 2, 0.1, 3000 );
+            camera.position.set(0, 0, 0);
 
 
-        var imageURL = document.getElementById('imageInput');
-        var myURL = imageURL.value;
+            var scene = new THREE.Scene();
+            scene.background = new THREE.Color( 0xf0f0f0 );
+            scene.add(camera);
+
+
+            var canvas = document.getElementById('myCanvas');
+
+
+            document.body.appendChild( renderer.domElement );
 
 
 
+            var pls = img.height;
 
-        var renderer = new THREE.WebGLRenderer({canvas: document.getElementById('myCanvas'), antialias: true});
-        //renderer.setClearColor(0xf0f0f0);
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.setSize(window.innerWidth, window.innerHeight);
-
-
-
-       var camera = new THREE.OrthographicCamera( innerWidth / - 2, innerWidth / 2, innerHeight / 2, innerHeight / - 2, 0.1, 3000 );
-        camera.position.set(0, 0, 0);
+            /* var start = new THREE.BoxGeometry(img.width + 50, img.Height + 50, 2);
+            var grid = new THREE.Mesh(start, new THREE.MeshBasicMaterial({color: 0x000000}));
+            grid.position.set(((innerWidth / 2) * -1) + 400, innerHeight / 2 - 200, -1010);
+            scene.add(grid);
 
 
-        var scene = new THREE.Scene();
-        scene.background = new THREE.Color( 0xf0f0f0 );
-        scene.add(camera);
+            var innerGridGeo = new THREE.BoxGeometry(img.width, img.height, 2);
+            var innerGrid = new THREE.Mesh(innerGridGeo, new THREE.MeshBasicMaterial({color: 0xf0f0f0}));
+            innerGrid.position.set(((innerWidth / 2) * -1) + 400, innerHeight / 2 - 200, -1005);
+            scene.add(innerGrid);*/
+
+            var pieceWidth = img.width / Math.sqrt(numPieces);
+            var pieceHeight = img.height / Math.sqrt(numPieces);
+
+
+            for (var x = 0; x < numPieces; ++x) {
+                for (var y = 0; y < Math.sqrt(numPieces); ++y) {
+                    var canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    var context = canvas.getContext('2d');
+                    context.drawImage(img, x * img.width, y * img.height, img.width, img.height, 0, 0, canvas.width, canvas.height);
+                    imagePieces.push(canvas.toDataURL());
+                }
+            }
+            createRender(camera, scene, renderer, numPieces, imagePieces);
+
+        }
+
+        img.src = document.getElementById('imageInput').value;
+    };
+
+
+    function createRender(camera, scene, renderer, numPieces, imagePieces){
+
+
 
 
         var canvas = document.getElementById('myCanvas');
+
 
         document.body.appendChild( renderer.domElement );
 
@@ -366,22 +434,18 @@
 
         var objects = [];
 
-        var start = new THREE.BoxGeometry(innerWidth / 2, innerHeight / 2, 2);
-        var grid = new THREE.Mesh(start, new THREE.MeshBasicMaterial({color: 0x000000}));
-        grid.position.set(((innerWidth / 2) * -1) + 400, innerHeight / 2 - 200, -1010);
-        scene.add(grid);
 
-
-        var innerGridGeo = new THREE.BoxGeometry(innerWidth / 2.05, innerHeight / 2.1, 2);
-        var innerGrid = new THREE.Mesh(innerGridGeo, new THREE.MeshBasicMaterial({color:0xf0f0f0}));
-        innerGrid.position.set(((innerWidth / 2) * -1) + 400, innerHeight / 2 - 200, -1005);
-        scene.add(innerGrid);
 
         var geometry = new THREE.BoxGeometry(50, 50, 2);
-        for (var i = 0; i< 100; i++){
+        for (var i = 0; i< numPieces; i++){
+
+            var splitImg = new Image();
+            splitImg.src = imagePieces[i];
+
+            var texture = new THREE.TextureLoader().load( splitImg );
 
 
-            var cube = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({color: Math.random() * 0xffffff}));
+            var cube = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({map: texture}));
 
             cube.position.x = Math.random() * (window.innerWidth / 3) + 200;
             cube.position.y = -1 * Math.random() * (window.innerHeight  / 2) + 100;
@@ -393,15 +457,11 @@
 
         }
 
-        function render(){
-            renderer.render(scene, camera);
-        }
 
-        
 
-        const dragControls = new THREE.DragControls(objects, camera, renderer.domElement);
 
         function animate() {
+            const dragControls = new THREE.DragControls(objects, camera, renderer.domElement);
             requestAnimationFrame(animate);
             renderer.render(scene, camera);
         }
