@@ -367,6 +367,7 @@
 
         function splitPieces() {
 
+
             var pieceWidth = img.width / Math.sqrt(numPieces);
             var pieceHeight = img.height / Math.sqrt(numPieces);
 
@@ -411,31 +412,54 @@
             var texture = new THREE.TextureLoader().load( this.src );
             var material = new THREE.MeshBasicMaterial({map: texture});
             var objects = [];
+            var grid = [];
 
 
                 for (var i = 0; i < Math.sqrt(numPieces); i++){
-                for (var j = 0; j < Math.sqrt(numPieces); j++){
-                    var geometry = new THREE.PlaneGeometry(pieceWidth,pieceHeight);
-                    geometry.faceVertexUvs[0][0][0].set(a * i, 1 - (b * j));
-                    geometry.faceVertexUvs[0][0][1].set(a * i, 1 - (b * (j + 1)));
-                    geometry.faceVertexUvs[0][0][2].set(a * (i + 1), 1 - (b * j));
+                    for (var j = 0; j < Math.sqrt(numPieces); j++){
+                        var geometry = new THREE.PlaneGeometry(pieceWidth,pieceHeight);
+                        geometry.faceVertexUvs[0][0][0].set(a * i, 1 - (b * j));
+                        geometry.faceVertexUvs[0][0][1].set(a * i, 1 - (b * (j + 1)));
+                        geometry.faceVertexUvs[0][0][2].set(a * (i + 1), 1 - (b * j));
 
-                    geometry.faceVertexUvs[0][1][0].set(a * i, 1 - (b * (j+ 1)));
-                    geometry.faceVertexUvs[0][1][1].set(a * (i + 1), 1 - (b * (j + 1)));
-                    geometry.faceVertexUvs[0][1][2].set(a * (i + 1), 1 - (b * j));
+                        geometry.faceVertexUvs[0][1][0].set(a * i, 1 - (b * (j+ 1)));
+                        geometry.faceVertexUvs[0][1][1].set(a * (i + 1), 1 - (b * (j + 1)));
+                        geometry.faceVertexUvs[0][1][2].set(a * (i + 1), 1 - (b * j));
 
-                    var mesh = new THREE.Mesh( geometry, material );
+                        var mesh = new THREE.Mesh( geometry, material );
 
-                    mesh.position.x = Math.random() * (img.width / 2);
-                    mesh.position.y = -1 * Math.random() * (img.height / 2);
-                    mesh.position.z = (-1 * numPieces - 10) + (4*i + j);
+                        mesh.position.x = Math.random() * (img.width / 2);
+                        mesh.position.y = -1 * Math.random() * (img.height / 2);
+                        mesh.position.z = (-1 * numPieces - 10) + (4*i + j);
+                        objects.push(mesh);
+                        scene.add(mesh);
 
-                    objects.push(mesh);
-                    scene.add(mesh);
 
 
+                        var snapGeometry = new THREE.PlaneGeometry(pieceWidth, pieceHeight);
+                        var snapMat = new THREE.MeshBasicMaterial({color: 0xff0000 + (j * 300) + (i * 300)});
+                        var snap = new THREE.Mesh(snapGeometry, snapMat);
+
+                        if (i < Math.sqrt(numPieces) / 2) {
+                            snap.position.x = -1 * ((pieceWidth / 2) + pieceWidth * (((Math.sqrt(numPieces) / 2) - 1) - i)) - (img.width / 2);
+                            //if (j < Math.sqrt(numPieces) / 2) {
+                            snap.position.y =((pieceHeight / 2) + pieceHeight * (((Math.sqrt(numPieces) / 2) - 1) - j)) + (img.height / 2);
+                            //}
+                            //else snap.position.y = ((img.height / 2) + img.height * (((Math.sqrt(numPieces) / 2) - 1) - j));
+                        }
+                        else{
+                            snap.position.x = -1 * ((pieceWidth / 2) + pieceWidth * (((Math.sqrt(numPieces) / 2) - 1) - i)) - (img.width / 2);
+                            //if (j < Math.sqrt(numPieces) / 2) {
+                            snap.position.y = ((pieceHeight / 2) + pieceHeight * (((Math.sqrt(numPieces) / 2) - 1) - j)) + (img.height / 2);
+                            // }
+                            //else snap.position.y = (img.height / 2) + img.height * (((Math.sqrt(numPieces) / 2) - 1) - j);
+                        }
+                        snap.position.z = -5;
+                        grid.push(snap);
                     }
                 }
+
+
 
 
 
@@ -448,12 +472,14 @@
                 //object.rotateAround(xAxis, Math.PI/180);
 
 
-                for (var i = 0; i < numPieces; i++){
+                for (var i = 0; i < numPieces; i++) {
 
-                   /* if ((Math.abs(objects[i].position.x - grid[i].position.x) <= img.width / 2) && (Math.abs(objects[i].position.y - grid[i].position.y) <= img.height)
-                        objects[i].position.set(grid[i].position);*/
+                    if ((Math.abs(objects[i].position.x - grid[i].position.x) <= (pieceWidth / 30)) && (Math.abs(objects[i].position.y - grid[i].position.y) <= (pieceHeight / 30))) {
+                        objects[i].position.x = grid[i].position.x;
+                        objects[i].position.y = grid[i].position.y;
 
-                        }
+                    }
+                }
 
                 renderer.render(scene, camera);
             }
