@@ -3,7 +3,7 @@
 
 <head>
     <meta charset=utf-8>
-    <title>My first three.js app</title>
+    <title>3D Jigsaw</title>
     <label type="text">IMAGE:</label>
     <input type="text" id="imageInput" />
     <Button id="picSubmit" type="button">SUBMIT IMAGE</Button>
@@ -12,6 +12,8 @@
     <input type="radio" name="difficulty" id="hard" > HARD </input>
     <input type="radio" name="difficulty" id="extreme" > EXTREME </input>
     <Button id="Hint" type="button">Hint</Button>
+    <Button id="save-btn" type="button">Save puzzle</Button>
+    <Button id="load-btn" type="button">Load puzzle</Button>
 
 
     <style>
@@ -324,35 +326,49 @@
     THREE.DragControls.prototype = Object.create( THREE.EventDispatcher.prototype );
     THREE.DragControls.prototype.constructor = THREE.DragControls;
 
-
+    var isLoad;
+    var xs=[];
+    var ys=[];
 
     /* authors: Nicholas Charles, Zack Brandon,
-                David Reedy, Landry LastName
+                David Reedy, Landry Matthews
      */
 
+    var loadImage = new Image();
+    document.getElementById('load-btn').onclick = function load (){
 
 
-    function sleep(miliseconds) {
-        var currentTime = new Date().getTime();
 
-        while (currentTime + miliseconds >= new Date().getTime()) {
-        }
-    }
+                var points = document.cookie.split('@');
+
+                for (var j=0; j<points.length - 2; j++) {
+                        var xy = points[j].split(',');
+                        xs.push(xy[0]);
+                        ys.push(xy[1]);
+
+                        }
 
 
+                isLoad = true;
+
+                loadImage.src = points[points.length - 2];
+                loadImage.onload = splitPieces;
+
+            };
+
+
+    var canvas = document.createElement('canvas');
+
+    var img = new Image();
+    img.onload = splitPieces;
+
+    var numPieces;
 
 
     document.getElementById('picSubmit').onclick = function() {
 
 
-        var canvas = document.createElement('canvas');
-        var ctx = canvas.getContext('2d');
-        var imgSplits = [];
-        var img = new Image();
-        img.onload = splitPieces;
 
-        var numPieces;
-        var imagePieces = [];
 
 
         var easy = document.getElementById('easy');
@@ -370,152 +386,177 @@
 
 
 
-        function splitPieces() {
 
-            img.crossOrigin = "Anonymous";
-            var pieceWidth = img.width / Math.sqrt(numPieces);
-            var pieceHeight = img.height / Math.sqrt(numPieces);
-
-            var a = pieceWidth / img.width,
-                b = pieceHeight / img.height;
-
-            var renderer = new THREE.WebGLRenderer({canvas: document.getElementById('myCanvas'), antialias: true});
-            renderer.setPixelRatio(window.devicePixelRatio);
-            renderer.setSize(window.innerWidth, window.innerHeight);
-
-            document.body.appendChild( renderer.domElement );
-
-            var camera = new THREE.OrthographicCamera( -1 * img.width - 60, img.width + 60, img.height + 60, -1 * img.height - 60, 0.1, 3000 );
-            camera.position.set(0, 0, 0);
-
-            var scene = new THREE.Scene();
-            scene.background = new THREE.Color( 0xf0f0f0 );
-            scene.add(camera);
-            var w, h;
-
-            if (img.width >= img.height){
-                w = 64;
-                h = 32;
-            }
-            else{
-                h = 64;
-                w = 32;
-            }
-
-
-
-            var outerGridGeo = new THREE.PlaneGeometry(img.width + (img.width / w), img.height + (img.height / h));
-            var outerGrid = new THREE.Mesh(outerGridGeo, new THREE.MeshBasicMaterial({color: 0x000000}));
-            outerGrid.position.set(-1 * (img.width / 2), img.height / 2, -200);
-            scene.add(outerGrid);
-
-            var innerGridGeo = new THREE.PlaneGeometry(img.width, img.height);
-            var innerGrid = new THREE.Mesh(innerGridGeo, new THREE.MeshBasicMaterial({color: 0xf0f0f0}));
-            innerGrid.position.set(-1 * (img.width / 2), img.height / 2, -195);
-            scene.add(innerGrid);
-
-            var texture = new THREE.TextureLoader().load( this.src );
-            var material = new THREE.MeshBasicMaterial({map: texture});
-            var objects = [];
-            var grid = [];
-
-
-                for (var i = 0; i < Math.sqrt(numPieces); i++){
-                    for (var j = 0; j < Math.sqrt(numPieces); j++){
-                        var geometry = new THREE.PlaneGeometry(pieceWidth,pieceHeight);
-                        geometry.faceVertexUvs[0][0][0].set(a * i, 1 - (b * j));
-                        geometry.faceVertexUvs[0][0][1].set(a * i, 1 - (b * (j + 1)));
-                        geometry.faceVertexUvs[0][0][2].set(a * (i + 1), 1 - (b * j));
-
-                        geometry.faceVertexUvs[0][1][0].set(a * i, 1 - (b * (j+ 1)));
-                        geometry.faceVertexUvs[0][1][1].set(a * (i + 1), 1 - (b * (j + 1)));
-                        geometry.faceVertexUvs[0][1][2].set(a * (i + 1), 1 - (b * j));
-
-                        var mesh = new THREE.Mesh( geometry, material );
-
-                        mesh.position.x = Math.random() * (img.width / 2);
-                        mesh.position.y = -1 * Math.random() * (img.height / 2);
-                        mesh.position.z = (-1 * numPieces - 10) + (4*i + j);
-                        objects.push(mesh);
-                        scene.add(mesh);
-
-
-
-                        var snapGeometry = new THREE.PlaneGeometry(pieceWidth, pieceHeight);
-                        var snapMat = new THREE.MeshBasicMaterial({color: 0xff0000 + (j * 300) + (i * 300)});
-                        var snap = new THREE.Mesh(snapGeometry, snapMat);
-
-                        if (i < Math.sqrt(numPieces) / 2) {
-                            snap.position.x = -1 * ((pieceWidth / 2) + pieceWidth * (((Math.sqrt(numPieces) / 2) - 1) - i)) - (img.width / 2);
-                            //if (j < Math.sqrt(numPieces) / 2) {
-                            snap.position.y =((pieceHeight / 2) + pieceHeight * (((Math.sqrt(numPieces) / 2) - 1) - j)) + (img.height / 2);
-                            //}
-                            //else snap.position.y = ((img.height / 2) + img.height * (((Math.sqrt(numPieces) / 2) - 1) - j));
-                        }
-                        else{
-                            snap.position.x = -1 * ((pieceWidth / 2) + pieceWidth * (((Math.sqrt(numPieces) / 2) - 1) - i)) - (img.width / 2);
-                            //if (j < Math.sqrt(numPieces) / 2) {
-                            snap.position.y = ((pieceHeight / 2) + pieceHeight * (((Math.sqrt(numPieces) / 2) - 1) - j)) + (img.height / 2);
-                            // }
-                            //else snap.position.y = (img.height / 2) + img.height * (((Math.sqrt(numPieces) / 2) - 1) - j);
-                        }
-                        snap.position.z = -5;
-                        grid.push(snap);
-                    }
-                }
-
-
-            var originalX = [];
-            var originalY = [];
-
-
-
-
-
-            //createRender(camera, scene, renderer, numPieces, imagePieces, pieceWidth, pieceHeight, objects);
-            function animate() {
-
-                const dragControls = new THREE.DragControls(objects, camera, renderer.domElement);
-
-
-                // var xAxis = new THREE.Vector3(0,0,1);
-                //object.rotateAround(xAxis, Math.PI/180);
-
-
-                for (var i = 0; i < numPieces; i++) {
-
-                    if ((Math.abs(objects[i].position.x - grid[i].position.x) <= (pieceWidth / 30)) && (Math.abs(objects[i].position.y - grid[i].position.y) <= (pieceHeight / 30))) {
-                        objects[i].position.x = grid[i].position.x;
-                        objects[i].position.y = grid[i].position.y;
-                    }
-                }
-
-                document.getElementById('Hint').onclick = function hint() {
-
-                    for (var p = 0; p < numPieces; p++) {
-
-                        originalX.push(objects[p].position.x);
-                        originalY.push(objects[p].position.y);
-                        objects[p].position.x = grid[p].position.x;
-                        objects[p].position.y = grid[p].position.y;
-
-
-                    }
-                    window.setTimeout(function () {
-                        fix(objects, originalX, originalY, numPieces);
-                    }, 3000);
-
-                }
-
-                renderer.render(scene, camera);
-                requestAnimationFrame(animate);
-
-            }
-            animate();
-        }
 
         img.src = document.getElementById('imageInput').value;
     };
+
+    function splitPieces() {
+
+
+        if (isLoad)
+            img = loadImage;
+
+        this.crossOrigin = "Anonymous";
+        var pieceWidth = img.width / Math.sqrt(numPieces);
+        var pieceHeight = img.height / Math.sqrt(numPieces);
+
+        var a = pieceWidth / img.width,
+            b = pieceHeight / img.height;
+
+        var renderer = new THREE.WebGLRenderer({canvas: document.getElementById('myCanvas'), antialias: true});
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        document.body.appendChild( renderer.domElement );
+
+        var camera = new THREE.OrthographicCamera( -1 * img.width - 60, img.width + 60, img.height + 60, -1 * img.height - 60, 0.1, 3000 );
+        camera.position.set(0, 0, 0);
+
+        var scene = new THREE.Scene();
+        scene.background = new THREE.Color( 0xf0f0f0 );
+        scene.add(camera);
+        var w, h;
+
+        if (img.width >= img.height){
+            w = 64;
+            h = 32;
+        }
+        else{
+            h = 64;
+            w = 32;
+        }
+
+
+
+        var outerGridGeo = new THREE.PlaneGeometry(img.width + (img.width / w), img.height + (img.height / h));
+        var outerGrid = new THREE.Mesh(outerGridGeo, new THREE.MeshBasicMaterial({color: 0x000000}));
+        outerGrid.position.set(-1 * (img.width / 2), img.height / 2, -200);
+        scene.add(outerGrid);
+
+        var innerGridGeo = new THREE.PlaneGeometry(img.width, img.height);
+        var innerGrid = new THREE.Mesh(innerGridGeo, new THREE.MeshBasicMaterial({color: 0xf0f0f0}));
+        innerGrid.position.set(-1 * (img.width / 2), img.height / 2, -195);
+        scene.add(innerGrid);
+
+        var texture = new THREE.TextureLoader().load( this.src );
+        var material = new THREE.MeshBasicMaterial({map: texture});
+        var objects = [];
+        var grid = [];
+
+
+
+        for (var i = 0; i < Math.sqrt(numPieces); i++){
+            for (var j = 0; j < Math.sqrt(numPieces); j++) {
+                var geometry = new THREE.PlaneGeometry(pieceWidth, pieceHeight);
+                geometry.faceVertexUvs[0][0][0].set(a * i, 1 - (b * j));
+                geometry.faceVertexUvs[0][0][1].set(a * i, 1 - (b * (j + 1)));
+                geometry.faceVertexUvs[0][0][2].set(a * (i + 1), 1 - (b * j));
+
+                geometry.faceVertexUvs[0][1][0].set(a * i, 1 - (b * (j + 1)));
+                geometry.faceVertexUvs[0][1][1].set(a * (i + 1), 1 - (b * (j + 1)));
+                geometry.faceVertexUvs[0][1][2].set(a * (i + 1), 1 - (b * j));
+
+                var mesh = new THREE.Mesh(geometry, material);
+
+                if (isLoad){
+                mesh.position.x = xs[Math.sqrt(numPieces) * i + j];
+                mesh.position.y = ys[Math.sqrt(numPieces) * i + j];
+                mesh.position.z = (-1 * numPieces - 10) + (4 * i + j);
+                objects.push(mesh);
+                scene.add(mesh);
+
+                }else{
+                    mesh.position.x = Math.random() * (img.width / 2);
+                    mesh.position.y = -1 * Math.random() * (img.height / 2);
+                    mesh.position.z = (-1 * numPieces - 10) + (4 * i + j);
+                    objects.push(mesh);
+                    scene.add(mesh);
+                }
+
+                var snapGeometry = new THREE.PlaneGeometry(pieceWidth, pieceHeight);
+                var snapMat = new THREE.MeshBasicMaterial({color: 0xff0000 + (j * 300) + (i * 300)});
+                var snap = new THREE.Mesh(snapGeometry, snapMat);
+
+                if (i < Math.sqrt(numPieces) / 2) {
+                    snap.position.x = -1 * ((pieceWidth / 2) + pieceWidth * (((Math.sqrt(numPieces) / 2) - 1) - i)) - (img.width / 2);
+                    //if (j < Math.sqrt(numPieces) / 2) {
+                    snap.position.y =((pieceHeight / 2) + pieceHeight * (((Math.sqrt(numPieces) / 2) - 1) - j)) + (img.height / 2);
+                    //}
+                    //else snap.position.y = ((img.height / 2) + img.height * (((Math.sqrt(numPieces) / 2) - 1) - j));
+                }
+                else{
+                    snap.position.x = -1 * ((pieceWidth / 2) + pieceWidth * (((Math.sqrt(numPieces) / 2) - 1) - i)) - (img.width / 2);
+                    //if (j < Math.sqrt(numPieces) / 2) {
+                    snap.position.y = ((pieceHeight / 2) + pieceHeight * (((Math.sqrt(numPieces) / 2) - 1) - j)) + (img.height / 2);
+                    // }
+                    //else snap.position.y = (img.height / 2) + img.height * (((Math.sqrt(numPieces) / 2) - 1) - j);
+                }
+                snap.position.z = -5;
+                grid.push(snap);
+            }
+        }
+
+
+        var originalX = [];
+        var originalY = [];
+
+
+
+
+
+        //createRender(camera, scene, renderer, numPieces, imagePieces, pieceWidth, pieceHeight, objects);
+        function animate() {
+
+            const dragControls = new THREE.DragControls(objects, camera, renderer.domElement);
+
+
+            document.getElementById('save-btn').onclick = function save (){
+                document.cookie="";
+
+                for (var i=0; i<numPieces; i++) {
+                    document.cookie = document.cookie + objects[i].position.x + "," + objects[i].position.y + "@; expires=Fri, 31 Dec 9999 23:59:59 GMT";
+                }
+                document.cookie = document.cookie + img.src + "@; expires=Fri, 31 Dec 9999 23:59:59 GMT";
+            };
+
+
+            // var xAxis = new THREE.Vector3(0,0,1);
+            //object.rotateAround(xAxis, Math.PI/180);
+
+
+            for (var i = 0; i < numPieces; i++) {
+
+                if ((Math.abs(objects[i].position.x - grid[i].position.x) <= (pieceWidth / 30)) && (Math.abs(objects[i].position.y - grid[i].position.y) <= (pieceHeight / 30))) {
+                    objects[i].position.x = grid[i].position.x;
+                    objects[i].position.y = grid[i].position.y;
+                }
+            }
+
+
+            document.getElementById('Hint').onclick = function hint() {
+
+                for (var p = 0; p < numPieces; p++) {
+
+                    originalX.push(objects[p].position.x);
+                    originalY.push(objects[p].position.y);
+                    objects[p].position.x = grid[p].position.x;
+                    objects[p].position.y = grid[p].position.y;
+
+
+                }
+                window.setTimeout(function () {
+                    fix(objects, originalX, originalY, numPieces);
+                }, 3000);
+
+            };
+
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+
+        }
+        animate();
+    }
 
 function fix(objects, originalX, originalY, numPieces){
 
