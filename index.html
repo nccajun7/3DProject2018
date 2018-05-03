@@ -173,7 +173,9 @@
 
                 scope.dispatchEvent( { type: 'dragstart', object: _selected } );
 
+
             }
+
 
 
         }
@@ -204,6 +206,7 @@
             _mouse.x = ( ( event.clientX - rect.left ) / rect.width ) * 2 - 1;
             _mouse.y = - ( ( event.clientY - rect.top ) / rect.height ) * 2 + 1;
 
+
             _raycaster.setFromCamera( _mouse, _camera );
 
             if ( _selected && scope.enabled ) {
@@ -220,6 +223,7 @@
 
             }
 
+
         }
 
         function onDocumentTouchStart( event ) {
@@ -231,6 +235,8 @@
 
             _mouse.x = ( ( event.clientX - rect.left ) / rect.width ) * 2 - 1;
             _mouse.y = - ( ( event.clientY - rect.top ) / rect.height ) * 2 + 1;
+
+
 
             _raycaster.setFromCamera( _mouse, _camera );
 
@@ -253,6 +259,7 @@
                 scope.dispatchEvent( { type: 'dragstart', object: _selected } );
 
             }
+
 
 
         }
@@ -372,16 +379,34 @@
 
             document.body.appendChild( renderer.domElement );
 
-            var camera = new THREE.OrthographicCamera( innerWidth / - 2, innerWidth / 2, innerHeight / 2, innerHeight / - 2, 0.1, 3000 );
+            var camera = new THREE.OrthographicCamera( -1 * img.width - 60, img.width + 60, img.height + 60, -1 * img.height - 60, 0.1, 3000 );
             camera.position.set(0, 0, 0);
 
             var scene = new THREE.Scene();
             scene.background = new THREE.Color( 0xf0f0f0 );
             scene.add(camera);
+            var w, h;
+
+            if (img.width >= img.height){
+                w = 64;
+                h = 32;
+            }
+            else{
+                h = 64;
+                w = 32;
+            }
 
 
 
+            var outerGridGeo = new THREE.PlaneGeometry(img.width + (img.width / w), img.height + (img.height / h));
+            var outerGrid = new THREE.Mesh(outerGridGeo, new THREE.MeshBasicMaterial({color: 0x000000}));
+            outerGrid.position.set(-1 * (img.width / 2), img.height / 2, -50);
+            scene.add(outerGrid);
 
+            var innerGridGeo = new THREE.PlaneGeometry(img.width, img.height);
+            var innerGrid = new THREE.Mesh(innerGridGeo, new THREE.MeshBasicMaterial({color: 0xf0f0f0}));
+            innerGrid.position.set(-1 * (img.width / 2), img.height / 2, -49);
+            scene.add(innerGrid);
 
             var texture = new THREE.TextureLoader().load( this.src );
             var material = new THREE.MeshBasicMaterial({map: texture});
@@ -399,24 +424,37 @@
                     geometry.faceVertexUvs[0][1][1].set(a * (i + 1), 1 - (b * (j + 1)));
                     geometry.faceVertexUvs[0][1][2].set(a * (i + 1), 1 - (b * j));
 
-                   // geometry.faceVertexUvs[0][0][3].set(a * (i + 1), 1 - (b * j));
-
-
                     var mesh = new THREE.Mesh( geometry, material );
 
-                    mesh.position.x = Math.random() * (window.innerWidth / 3) + 200;
-                    mesh.position.y = -1 * Math.random() * (window.innerHeight  / 2) + 100;
-                    mesh.position.z = -5;
-                    scene.add(mesh);
+                    mesh.position.x = Math.random() * (img.width / 2);
+                    mesh.position.y = -1 * Math.random() * (img.height / 2);
+                    mesh.position.z = (-1 * numPieces - 10) + (4*i + j);
+
                     objects.push(mesh);
+                    scene.add(mesh);
+
+
+                    }
                 }
-            }
+
 
 
             //createRender(camera, scene, renderer, numPieces, imagePieces, pieceWidth, pieceHeight, objects);
             function animate() {
                 const dragControls = new THREE.DragControls(objects, camera, renderer.domElement);
                 requestAnimationFrame(animate);
+
+               // var xAxis = new THREE.Vector3(0,0,1);
+                //object.rotateAround(xAxis, Math.PI/180);
+
+
+                for (var i = 0; i < numPieces; i++){
+
+                   /* if ((Math.abs(objects[i].position.x - grid[i].position.x) <= img.width / 2) && (Math.abs(objects[i].position.y - grid[i].position.y) <= img.height)
+                        objects[i].position.set(grid[i].position);*/
+
+                        }
+
                 renderer.render(scene, camera);
             }
 
@@ -427,9 +465,13 @@
     };
 
 
+    /*document.addEventListener("keydown", onDocumentKeyDown, false);
+    function onDocumentKeyDown(event, mesh) {
+        var keyCode = event.which;
+        if (keyCode == 87)
+            mesh.rotation.z += Math.PI / 4;
 
-
-
+        }*/
 
 
 
