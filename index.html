@@ -11,7 +11,7 @@
     <input type="radio" name="difficulty" id="easy" > EASY </input>
     <input type="radio" name="difficulty" id="hard" > HARD </input>
     <input type="radio" name="difficulty" id="extreme" > EXTREME </input>
-    <Button id="submit" type="button">SUBMIT SETTINGS</Button>
+    <Button id="Hint" type="button">Hint</Button>
 
 
     <style>
@@ -332,7 +332,12 @@
 
 
 
+    function sleep(miliseconds) {
+        var currentTime = new Date().getTime();
 
+        while (currentTime + miliseconds >= new Date().getTime()) {
+        }
+    }
 
 
 
@@ -345,7 +350,7 @@
         var imgSplits = [];
         var img = new Image();
         img.onload = splitPieces;
-        img.crossOrigin = "Anonymous";
+
         var numPieces;
         var imagePieces = [];
 
@@ -367,7 +372,7 @@
 
         function splitPieces() {
 
-
+            img.crossOrigin = "Anonymous";
             var pieceWidth = img.width / Math.sqrt(numPieces);
             var pieceHeight = img.height / Math.sqrt(numPieces);
 
@@ -460,11 +465,13 @@
                 }
 
 
-
+            var originalX = [];
+            var originalY = [];
 
 
             //createRender(camera, scene, renderer, numPieces, imagePieces, pieceWidth, pieceHeight, objects);
             function animate() {
+
                 const dragControls = new THREE.DragControls(objects, camera, renderer.domElement);
                 requestAnimationFrame(animate);
 
@@ -481,6 +488,27 @@
                     }
                 }
 
+                document.getElementById('Hint').onclick = function hint(){
+
+                    for (var p = 0; p < numPieces; p++) {
+
+                            originalX.push(objects[p].position.x);
+                            originalY.push(objects[p].position.y);
+                            objects[p].position.x = grid[p].position.x;
+                            objects[p].position.y = grid[p].position.y;
+
+                        }
+                    window.setTimeout(function() {
+                        fix(objects, originalX, originalY, numPieces);
+                    },3000);
+
+
+
+                    };
+
+
+
+
                 renderer.render(scene, camera);
             }
 
@@ -490,7 +518,16 @@
         img.src = document.getElementById('imageInput').value;
     };
 
+function fix(objects, originalX, originalY, numPieces){
 
+
+    for (var t = 0; t < numPieces; t++) {
+
+        objects[t].position.x = originalX[t];
+        objects[t].position.y = originalY[t];
+    }
+
+}
     /*document.addEventListener("keydown", onDocumentKeyDown, false);
     function onDocumentKeyDown(event, mesh) {
         var keyCode = event.which;
